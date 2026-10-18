@@ -1,0 +1,18 @@
+{
+  "name": "cyberguard-communityshield-v2",
+  "version": "2.0.0",
+  "description": "AI-Powered Community SDG & Cyber Crime Awareness Platform with Live Analytics, Interactive UPI Simulator, and Multilingual Voice Support",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seeders/seed.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "sequelize": "^6.37.3",
+    "sqlite3": "^5.1.7",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5"
+  }
+}

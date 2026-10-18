@@ -1,0 +1,81 @@
+:root {
+  --primary: #1e3a8a;
+  --primary-hover: #1d4ed8;
+  --secondary: #0d9488;
+  --accent-danger: #dc2626;
+  --accent-warning: #d97706;
+  --bg-light: #f8fafc;
+  --card-bg: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-light);
+  color: var(--text-main);
+  margin: 0;
+  padding: 0;
+}
+
+.gradient-header {
+  background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+}
+
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+}
+
+.risk-bar {
+  height: 12px;
+  border-radius: 6px;
+  transition: width 0.5s ease-in-out;
+}
+
+.phone-simulator-frame {
+  width: 320px;
+  height: 560px;
+  border: 12px solid #1e293b;
+  border-radius: 36px;
+  background-color: #0f172a;
+  box-shadow: 0 20px 40px -15px rgba(0,0,0,0.5);
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.phone-screen {
+  background: #ffffff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#map {
+  height: 380px;
+  width: 100%;
+  border-radius: 12px;
+  z-index: 1;
+}
+
+.speaker-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.speaker-btn:hover {
+  background: #e2e8f0;
+  color: #1e3a8a;
+}
