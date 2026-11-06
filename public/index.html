@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kavix | Autonomous On-Device Mobile Sentinel</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-[#070B12] text-slate-100 antialiased min-h-screen">
+
+  <!-- TOP APP STATUS BAR -->
+  <div class="bg-slate-900/90 border-b border-slate-800 text-slate-300 text-xs py-2 px-4 sticky top-0 z-50 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-2 font-mono">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+        <span class="text-emerald-400 font-semibold">09:41 AM</span>
+        <span class="text-slate-500">|</span>
+        <span class="text-cyan-400"><i class="fa-solid fa-shield-halved mr-1"></i>Kavix Active</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="bg-slate-800 px-2 py-0.5 rounded text-slate-400 border border-slate-700">1930 Cyber Helpline</span>
+        <button onclick="toggleLanguage()" class="bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-800/50 px-2.5 py-0.5 rounded flex items-center gap-1 font-mono transition">
+          <i class="fa-solid fa-language"></i> <span id="currentLangLabel">English</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    
+    <!-- HEADER BRANDING & QUICK ACTIONS -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900/60 p-5 rounded-2xl border border-slate-800/80 backdrop-blur-xl">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-cyan-500/20">K</div>
+          <div>
+            <h1 class="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-sky-200 to-purple-400 bg-clip-text text-transparent">Kavix</h1>
+            <p class="text-xs text-slate-400 font-medium">Autonomous On-Device Scam Interceptor & Community Shield</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 w-full md:w-auto">
+        <button onclick="simulateScamSMS()" class="w-full md:w-auto bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-rose-950/50 flex items-center justify-center gap-2 border border-rose-400/30">
+          <i class="fa-solid fa-bolt"></i> Simulate Scam SMS
+        </button>
+      </div>
+    </div>
+
+    <!-- FLOATING HEADING ALERT BANNER (DYNAMICALLY SHOWN ON SCAM) -->
+    <div id="alertBanner" class="hidden bg-slate-900/90 border-2 border-rose-500/80 p-5 rounded-2xl shadow-2xl shadow-rose-950/80 backdrop-blur-2xl animate-bounce space-y-3">
+      <div class="flex justify-between items-start">
+        <div class="flex items-center gap-2">
+          <span class="signal-badge-red text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+            <i class="fa-solid fa-triangle-exclamation animate-pulse"></i> RED SIGNAL: CRITICAL SCAM
+          </span>
+          <span class="text-xs text-slate-400 font-mono">Score: <strong id="bannerScore" class="text-rose-400">98%</strong></span>
+        </div>
+        <button onclick="closeAlertBanner()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div>
+        <h3 id="bannerSender" class="font-bold text-slate-100 text-sm">State Electricity Board Alert</h3>
+        <p id="bannerBody" class="text-xs text-slate-300 mt-1 font-mono bg-slate-950/80 p-3 rounded-xl border border-slate-800">Dear Consumer, your electricity power will be disconnected tonight at 9:30 PM due to unpaid bill. Call officer immediately...</p>
+      </div>
+      <div class="flex items-center gap-2 text-xs font-mono text-rose-400 bg-rose-950/30 p-2 rounded-lg border border-rose-900/50">
+        <i class="fa-solid fa-users"></i>
+        <span>Flagged by <strong id="bannerCrowdReports">3,890</strong> users as Fake Electricity Board Scam</span>
+      </div>
+      <div class="flex flex-wrap gap-2 pt-1">
+        <button onclick="speakText('Warning! High risk electricity scam detected. Do not pay or call.')" class="bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+          <i class="fa-solid fa-volume-high"></i> Audio Warning
+        </button>
+        <button onclick="alert('Sender blocked successfully.')" class="bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+          <i class="fa-solid fa-ban"></i> Block Sender
+        </button>
+        <button onclick="alert('Incident reported to 1930 Cyber Helpline.')" class="bg-amber-950 hover:bg-amber-900 text-amber-300 border border-amber-800 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+          <i class="fa-solid fa-phone"></i> Call 1930
+        </button>
+      </div>
+    </div>
+
+    <!-- MODULE NAVIGATION TABS -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-slate-800/80">
+      <button onclick="switchTab('security')" id="tab-security" class="tab-btn active-tab-btn">
+        <i class="fa-solid fa-shield-halved"></i> Security Feed
+      </button>
+      <button onclick="switchTab('email')" id="tab-email" class="tab-btn inactive-tab-btn">
+        <i class="fa-solid fa-envelope-shield"></i> Email Guard
+      </button>
+      <button onclick="switchTab('gis')" id="tab-gis" class="tab-btn inactive-tab-btn">
+        <i class="fa-solid fa-map-location-dot"></i> Live GIS Map
+      </button>
+      <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn inactive-tab-btn">
+        <i class="fa-solid fa-mobile-retro"></i> UPI Simulator
+      </button>
+      <button onclick="switchTab('modules')" id="tab-modules" class="tab-btn inactive-tab-btn">
+        <i class="fa-solid fa-graduation-cap"></i> Quizzes & Learning
+      </button>
+      <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn inactive-tab-btn">
+        <i class="fa-solid fa-sliders"></i> Settings
+      </button>
+    </div>
+
+    <!-- TAB 1: SECURITY FEED & LIVE INTERCEPTOR -->
+    <section id="content-security" class="tab-content space-y-6">
+      
+      <!-- INTERCEPTOR INPUT CARDS -->
+      <div class="glass-card p-5 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="font-bold text-slate-100 text-base flex items-center gap-2">
+            <i class="fa-solid fa-magnifying-glass text-cyan-400"></i> Manual Scam Interceptor
+          </h2>
+          <span class="text-xs text-slate-400 font-mono">On-Device NLP Engine</span>
+        </div>
+        <div>
+          <textarea id="analyzerInput" rows="3" class="w-full bg-slate-950 text-slate-100 p-3 rounded-xl border border-slate-800 focus:border-cyan-500 focus:outline-none text-xs font-mono placeholder:text-slate-600" placeholder="Paste any suspicious SMS, WhatsApp message, or UPI transaction details here..."></textarea>
+        </div>
+        <div class="flex justify-between items-center">
+          <button onclick="analyzeText()" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition shadow-lg shadow-cyan-950/50 flex items-center gap-2">
+            <i class="fa-solid fa-microchip"></i> Scan Message
+          </button>
+          <span class="text-xs text-slate-500 font-mono">Privacy Guaranteed: Local Parsing</span>
+        </div>
+        <div id="analyzerResult" class="hidden p-4 rounded-xl border text-xs font-mono space-y-2"></div>
+      </div>
+
+      <!-- LIVE SECURITY FEED -->
+      <div class="space-y-3">
+        <h2 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-purple-400"></i> Intercepted Security Activity Log
+        </h2>
+
+        <!-- FEED CARD 1: ELECTRICITY SCAM (RED) -->
+        <div class="glass-card p-4 space-y-2 border-l-4 border-l-rose-500">
+          <div class="flex justify-between items-center">
+            <span class="signal-badge-red text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <i class="fa-solid fa-circle-exclamation"></i> RED SIGNAL: SCAM DETECTED
+            </span>
+            <span class="text-[11px] text-slate-400 font-mono">Just Now</span>
+          </div>
+          <div class="font-bold text-xs text-slate-200">Electricity Disconnection Threat (+91 98112 XXXXX)</div>
+          <div class="text-xs text-slate-400 font-mono bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
+            "Dear Consumer, your electricity power will be disconnected tonight at 9:30 PM due to unpaid bill... call electricity officer at 98112XXXXX immediately."
+          </div>
+          <div class="flex justify-between items-center text-[11px] pt-1">
+            <span class="text-rose-400 font-mono"><i class="fa-solid fa-users mr-1"></i>Flagged by 3,890 users as Scam</span>
+            <button onclick="speakText('Warning! Electricity scam detected. Do not pay.')" class="text-cyan-400 hover:underline flex items-center gap-1 font-mono">
+              <i class="fa-solid fa-volume-high"></i> Audio Warning
+            </button>
+          </div>
+        </div>
+
+        <!-- FEED CARD 2: JOB OFFER (YELLOW) -->
+        <div class="glass-card p-4 space-y-2 border-l-4 border-l-amber-500">
+          <div class="flex justify-between items-center">
+            <span class="signal-badge-yellow text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <i class="fa-solid fa-triangle-exclamation"></i> YELLOW SIGNAL: UNVERIFIED
+            </span>
+            <span class="text-[11px] text-slate-400 font-mono">12 mins ago</span>
+          </div>
+          <div class="font-bold text-xs text-slate-200">Part-Time Job Offer (+91 97180 XXXXX)</div>
+          <div class="text-xs text-slate-400 font-mono bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
+            "Earn Rs. 5000/day by liking YouTube videos. Deposit Rs. 500 initial registration kit fee..."
+          </div>
+          <div class="flex justify-between items-center text-[11px] pt-1">
+            <span class="text-amber-400 font-mono"><i class="fa-solid fa-users mr-1"></i>142 Community Reports</span>
+            <span class="text-slate-500 font-mono">Caution Advised</span>
+          </div>
+        </div>
+
+        <!-- FEED CARD 3: BANK DEBIT (GREEN) -->
+        <div class="glass-card p-4 space-y-2 border-l-4 border-l-emerald-500">
+          <div class="flex justify-between items-center">
+            <span class="signal-badge-green text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <i class="fa-solid fa-circle-check"></i> GREEN SIGNAL: VERIFIED
+            </span>
+            <span class="text-[11px] text-slate-400 font-mono">1 hour ago</span>
+          </div>
+          <div class="font-bold text-xs text-slate-200">HDFC Bank Official SMS (HDFCBK)</div>
+          <div class="text-xs text-slate-400 font-mono bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
+            "Rs. 450.00 debited from A/C **4102 on 06-11-26 via UPI to SWIGGY. Ref No 430129..."
+          </div>
+          <div class="flex justify-between items-center text-[11px] pt-1">
+            <span class="text-emerald-400 font-mono"><i class="fa-solid fa-shield-check mr-1"></i>Verified Official Sender</span>
+            <span class="text-slate-500 font-mono">Safe Transaction</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: EMAIL GUARD -->
+    <section id="content-email" class="tab-content hidden space-y-6">
+      <div class="glass-card p-5 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="font-bold text-slate-100 text-base flex items-center gap-2">
+            <i class="fa-solid fa-envelope-shield text-purple-400"></i> Email Phishing & Drive-By Inspector
+          </h2>
+          <span class="text-xs text-purple-400 font-mono">Header & Attachment Scanner</span>
+        </div>
+        <p class="text-xs text-slate-400">Inspect suspicious incoming emails for domain spoofing, fake website link redirects, and hidden executable attachments (.exe / .apk / .pdf.exe).</p>
+        
+        <div class="space-y-3 font-mono text-xs">
+          <div>
+            <label class="text-slate-300 block mb-1">Sender Address:</label>
+            <input type="text" id="emailSender" class="w-full bg-slate-950 text-slate-100 p-2.5 rounded-xl border border-slate-800 focus:border-purple-500 focus:outline-none" placeholder="e.g., support@paypai-security-verify.com">
+          </div>
+          <div>
+            <label class="text-slate-300 block mb-1">Email Subject:</label>
+            <input type="text" id="emailSubject" class="w-full bg-slate-950 text-slate-100 p-2.5 rounded-xl border border-slate-800 focus:border-purple-500 focus:outline-none" placeholder="e.g., URGENT: Account Suspended - Verify Identity Immediately">
+          </div>
+          <div>
+            <label class="text-slate-300 block mb-1">Email Body & Links:</label>
+            <textarea id="emailBody" rows="3" class="w-full bg-slate-950 text-slate-100 p-2.5 rounded-xl border border-slate-800 focus:border-purple-500 focus:outline-none placeholder:text-slate-600" placeholder="Paste email body text, suspicious URLs, or attachment filenames..."></textarea>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center pt-2">
+          <button onclick="scanEmail()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition shadow-lg shadow-purple-950/50 flex items-center gap-2">
+            <i class="fa-solid fa-shield-virus"></i> Inspect Email
+          </button>
+          <button onclick="loadSamplePhishingEmail()" class="text-xs text-purple-400 hover:underline font-mono">
+            Load Sample Phishing Email
+          </button>
+        </div>
+
+        <div id="emailScanResult" class="hidden p-4 rounded-xl border text-xs font-mono space-y-2"></div>
+      </div>
+    </section>
+
+    <!-- TAB 3: LIVE GIS MAP -->
+    <section id="content-gis" class="tab-content hidden space-y-6">
+      <div class="glass-card p-5 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="font-bold text-slate-100 text-base flex items-center gap-2">
+            <i class="fa-solid fa-map-location-dot text-cyan-400"></i> Spatial Scam Crime GIS Analytics
+          </h2>
+          <span class="text-xs text-cyan-400 font-mono">Real-Time Cluster Hotspots</span>
+        </div>
+        <p class="text-xs text-slate-400">Aggregated crowdsourced scam reports clustered geographically across districts to identify emerging fraud rings.</p>
+        
+        <div id="map" class="w-full h-80 rounded-xl border border-slate-800 bg-slate-950"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs pt-2">
+          <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
+            <div class="text-slate-400">Top Hotspot Category</div>
+            <div class="text-rose-400 font-bold text-sm mt-1">Electricity Bill Traps (38%)</div>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
+            <div class="text-slate-400">Avg Incident Resolution</div>
+            <div class="text-cyan-400 font-bold text-sm mt-1">14.2 Minutes (Helpline 1930)</div>
+          </div>
+          <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
+            <div class="text-slate-400">Protected Mobile Nodes</div>
+            <div class="text-emerald-400 font-bold text-sm mt-1">12,450 On-Device Users</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: UPI SIMULATOR -->
+    <section id="content-simulator" class="tab-content hidden space-y-6">
+      <div class="glass-card p-5 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="font-bold text-slate-100 text-base flex items-center gap-2">
+            <i class="fa-solid fa-mobile-retro text-amber-400"></i> Interactive UPI Reverse PIN Trap Simulator
+          </h2>
+          <span class="text-xs text-amber-400 font-mono">Interactive Safety Sandbox</span>
+        </div>
+        <p class="text-xs text-slate-400">Experience how scammers trick victims into entering UPI PINs under the guise of "receiving money". Learn the Golden Rule: <strong class="text-emerald-400">UPI PIN is ONLY required to SEND money!</strong></p>
+
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 font-mono text-xs">
+          <div class="flex justify-between items-center text-slate-300">
+            <span>Simulated Buyer: <strong>Kavix Fraud Test Account</strong></span>
+            <span class="text-rose-400 font-bold">Rs. 25,000 Payment Request</span>
+          </div>
+          <div class="p-3 bg-rose-950/40 border border-rose-900/50 text-rose-300 rounded-lg">
+            "I am sending you Rs. 25,000 for your OLX item. Enter your 6-digit UPI PIN below to complete receiving funds into your bank account!"
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="password" maxlength="6" placeholder="Enter 6-Digit PIN" class="bg-slate-900 text-center text-slate-100 p-2 rounded-lg border border-slate-700 w-40 text-sm tracking-widest focus:outline-none">
+            <button onclick="testSimulatorPin()" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs px-4 py-2 rounded-lg transition">
+              Submit PIN
+            </button>
+          </div>
+          <div id="simulatorResult" class="hidden p-3 rounded-lg border text-xs font-mono"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: MODULES & QUIZZES -->
+    <section id="content-modules" class="tab-content hidden space-y-6">
+      <div class="glass-card p-5 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="font-bold text-slate-100 text-base flex items-center gap-2">
+            <i class="fa-solid fa-graduation-cap text-emerald-400"></i> Cyber Safety Quizzes & Awareness Modules
+          </h2>
+          <span class="text-xs text-emerald-400 font-mono">SDG 3 & 10 Aligned</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+            <div class="font-bold text-slate-200 text-sm">Module 1: Identifying Fake APK Downloads</div>
+            <p class="text-slate-400 text-xs">Learn why sideloading .apk files from WhatsApp or SMS links compromises device security.</p>
+            <button onclick="alert('Starting Module 1 Quiz...')" class="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 px-3 py-1.5 rounded-lg text-xs transition">
+              Start Quiz
+            </button>
+          </div>
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+            <div class="font-bold text-slate-200 text-sm">Module 2: Fake Soundbox Audio Spoofing</div>
+            <p class="text-slate-400 text-xs">Understand how fake merchant payment apps trigger false voice confirmation sounds.</p>
+            <button onclick="alert('Starting Module 2 Quiz...')" class="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 px-3 py-1.5 rounded-lg text-xs transition">
+              Start Quiz
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: SETTINGS -->
+    <section id="content-settings" class="tab-content hidden space-y-6">
+      <div class="glass-card p-5 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="font-bold text-slate-100 text-base flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-cyan-400"></i> Application Settings & Preferences
+          </h2>
+          <span class="text-xs text-cyan-400 font-mono">On-Device Parameters</span>
+        </div>
+
+        <div class="space-y-3 font-mono text-xs">
+          <div class="flex justify-between items-center p-3 bg-slate-950 rounded-xl border border-slate-800">
+            <div>
+              <div class="font-bold text-slate-200">Background Notification Access Listener</div>
+              <div class="text-slate-500 text-[11px]">Interceptors incoming WhatsApp, Google Pay, and SMS notifications</div>
+            </div>
+            <span class="text-emerald-400 font-bold">ENABLED (Active)</span>
+          </div>
+
+          <div class="flex justify-between items-center p-3 bg-slate-950 rounded-xl border border-slate-800">
+            <div>
+              <div class="font-bold text-slate-200">NLP Model Sensitivity Threshold</div>
+              <div class="text-slate-500 text-[11px]">Higher sensitivity flags low-confidence unverified shortlinks</div>
+            </div>
+            <span class="text-cyan-400 font-bold">0.75 (High Precision)</span>
+          </div>
+
+          <div class="flex justify-between items-center p-3 bg-slate-950 rounded-xl border border-slate-800">
+            <div>
+              <div class="font-bold text-slate-200">Multilingual Speech Output Language</div>
+              <div class="text-slate-500 text-[11px]">Voice warnings for elderly and non-tech-savvy users</div>
+            </div>
+            <span class="text-purple-400 font-bold">English / Hindi Dual</span>
+          </div>
+
+          <div class="flex justify-between items-center p-3 bg-slate-950 rounded-xl border border-slate-800">
+            <div>
+              <div class="font-bold text-slate-200">National Cyber Helpline Integration</div>
+              <div class="text-slate-500 text-[11px]">Direct 1-click connectivity to official 1930 portal</div>
+            </div>
+            <span class="text-emerald-400 font-bold">Configured</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
